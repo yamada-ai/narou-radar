@@ -18,9 +18,18 @@ class DuckDBRepository:
 
 
     @staticmethod
+    def _normalize_value(value):
+        if isinstance(value, (date, datetime)):
+            return value.isoformat()
+        return value
+
+    @staticmethod
     def _rows_to_dicts(cur) -> list[dict]:
         cols = [d[0] for d in cur.description]
-        return [dict(zip(cols, row, strict=False)) for row in cur.fetchall()]
+        return [
+            {col: DuckDBRepository._normalize_value(val) for col, val in zip(cols, row, strict=False)}
+            for row in cur.fetchall()
+        ]
 
     def migrate(self) -> None:
         self.conn.execute(

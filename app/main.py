@@ -25,7 +25,7 @@ def index(request: Request) -> HTMLResponse:
     repo.migrate()
     themes = repo.list_latest_themes()
     repo.close()
-    return templates.TemplateResponse("index.html", {"request": request, "themes": themes})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request, "themes": themes})
 
 
 @app.get("/themes/{theme}", response_class=HTMLResponse)
@@ -34,7 +34,11 @@ def theme_detail(theme: str, request: Request) -> HTMLResponse:
     repo.migrate()
     detail = repo.get_theme_detail(theme)
     repo.close()
-    return templates.TemplateResponse("theme_detail.html", {"request": request, "theme": theme, "detail": detail})
+    return templates.TemplateResponse(
+        request=request,
+        name="theme_detail.html",
+        context={"request": request, "theme": theme, "detail": detail},
+    )
 
 
 @app.post("/admin/update")
