@@ -1,0 +1,34 @@
+[project]
+name = "narou-radar"
+version = "0.1.0"
+description = "MVP market observability dashboard for web novels"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.111",
+  "uvicorn[standard]>=0.30",
+  "duckdb>=1.0",
+  "httpx>=0.27",
+  "jinja2>=3.1",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.3",
+  "pyyaml>=6.0",
+  "python-dateutil>=2.9"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  "ruff>=0.5"
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+addopts = "-q"

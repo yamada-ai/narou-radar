@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>テーマ詳細: {{ theme }}</h2>
+{% set latest = detail.latest %}
+{% if latest %}
+<div class="cards">
+  <div>需要熱量: {{ '%.1f'|format(latest[2]) }}</div>
+  <div>供給圧: {{ '%.1f'|format(latest[3]) }}</div>
+  <div>参入余地: {{ '%.1f'|format(latest[4]) }}</div>
+  <div>持続力: {{ '%.1f'|format(latest[5]) }}</div>
+</div>
+<canvas id="radarChart" height="120"></canvas>
+<canvas id="lineChart" height="120"></canvas>
+<script>
+const latest = {{ {'demand': latest[2], 'supply': latest[3], 'entry': latest[4], 'sustain': latest[5]} | tojson }};
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ['需要熱量', '供給圧', '参入余地', '持続力'],
+    datasets: [{label: 'Radar', data: [latest.demand, latest.supply, latest.entry, latest.sustain]}]
+  },
+  options: { scales: { r: { suggestedMin: 0, suggestedMax: 100 } } }
+});
+const series = {{ detail.series | tojson }};
+new Chart(document.getElementById('lineChart'), {
+  type: 'line',
+  data: {
+    labels: series.map(x => x.snapshot_date),
+    datasets: [
+      { label: 'Avg Weekly Point', data: series.map(x => x.avg_weekly), borderColor: '#4a90e2' },
+      { label: 'Works Count', data: series.map(x => x.works_count), borderColor: '#50b37e' }
+    ]
+  }
+});
+</script>
+{% else %}
+<p>データがありません。トップ画面からデータ更新を実行してください。</p>
+{% endif %}
+{% endblock %}
