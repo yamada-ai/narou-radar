@@ -110,8 +110,26 @@ class DuckDBRepository:
               ds date,
               yhat double,
               model varchar,
-              created_at timestamp
+              created_at timestamp,
+              primary key (theme, metric, ds, model)
             );
+            """
+        )
+        # Backward compatibility for databases created before forecast PK was added.
+        self.conn.execute(
+            """
+            delete from forecast_results
+            where rowid not in (
+              select max(rowid)
+              from forecast_results
+              group by theme, metric, ds, model
+            );
+            """
+        )
+        self.conn.execute(
+            """
+            create unique index if not exists uq_forecast_results
+            on forecast_results(theme, metric, ds, model);
             """
         )
 
@@ -328,6 +346,11 @@ class DuckDBRepository:
         now = datetime.now(timezone.utc)
         for ds, yhat in preds:
             self.conn.execute(
-                "insert into forecast_results values (?, ?, ?, ?, ?, ?)",
+                """
+                insert into forecast_results values (?, ?, ?, ?, ?, ?)
+                on conflict (theme, metric, ds, model) do update set
+                  yhat=excluded.yhat,
+                  created_at=excluded.created_at
+                """,
                 [theme, metric, ds, yhat, model, now],
             )
