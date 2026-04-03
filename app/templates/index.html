@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>テーマ一覧（最新スナップショット）</h2>
+<table>
+  <thead>
+    <tr><th>theme</th><th>date</th><th>demand</th><th>supply</th><th>entry</th><th>sustain</th><th>works</th></tr>
+  </thead>
+  <tbody>
+    {% for t in themes %}
+    <tr>
+      <td><a href="/themes/{{ t.theme }}">{{ t.theme }}</a></td>
+      <td>{{ t.snapshot_date }}</td>
+      <td>{{ '%.1f'|format(t.demand_heat) }}</td>
+      <td>{{ '%.1f'|format(t.supply_pressure) }}</td>
+      <td>{{ '%.1f'|format(t.entry_opportunity) }}</td>
+      <td>{{ '%.1f'|format(t.sustainability) }}</td>
+      <td>{{ t.works_count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

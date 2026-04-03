@@ -1,0 +1,21 @@
+topics:
+  - slug: exile
+    label: 追放
+    query_keywords: ["追放", "ざまぁ"]
+    title_patterns: ["追放", "ざまぁ"]
+  - slug: revenge
+    label: 復讐
+    query_keywords: ["復讐"]
+    title_patterns: ["復讐", "報復"]
+  - slug: streaming
+    label: 配信
+    query_keywords: ["配信", "VTuber"]
+    title_patterns: ["配信", "Vtuber", "実況"]
+  - slug: villainess
+    label: 悪役令嬢
+    query_keywords: ["悪役令嬢"]
+    title_patterns: ["悪役令嬢"]
+  - slug: academy
+    label: 学園
+    query_keywords: ["学園"]
+    title_patterns: ["学園", "学院"]
