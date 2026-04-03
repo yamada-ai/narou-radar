@@ -28,6 +28,7 @@ uv sync
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
+# Form 送信を使うため python-multipart も自動導入されます
 ```
 
 ## 3. 起動方法
@@ -55,6 +56,8 @@ docker compose up --build
 uv run python scripts/fetch_data.py
 # 単一テーマのみ
 uv run python scripts/fetch_data.py --theme exile
+# 既存 snapshots からメトリクスのみ再計算（API再取得なし）
+uv run python scripts/recompute_metrics.py
 ```
 
 ### Web UI

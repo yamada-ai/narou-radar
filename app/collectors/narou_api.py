@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 import httpx
@@ -48,7 +48,8 @@ class NarouApiClient:
         return works, raw_text
 
     def fetch_ranking(self) -> tuple[dict[str, int], str]:
-        now = datetime.now(timezone.utc)
+        jst = timezone(timedelta(hours=9))
+        now = datetime.now(jst)
         params = {
             "out": "json",
             "rtype": "all",

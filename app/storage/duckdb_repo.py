@@ -16,6 +16,12 @@ class DuckDBRepository:
     def close(self) -> None:
         self.conn.close()
 
+
+    @staticmethod
+    def _rows_to_dicts(cur) -> list[dict]:
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, row, strict=False)) for row in cur.fetchall()]
+
     def migrate(self) -> None:
         self.conn.execute(
             """
@@ -253,8 +259,27 @@ class DuckDBRepository:
                 [snapshot_date, theme, source, token, count],
             )
 
+
+    def list_snapshot_themes(self, snapshot_date: date) -> list[str]:
+        rows = self.conn.execute(
+            "select distinct theme from snapshots where snapshot_date=? order by theme",
+            [snapshot_date],
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    def get_snapshot_entries(self, snapshot_date: date, theme: str) -> list[dict]:
+        cur = self.conn.execute(
+            """
+            select ncode, ranking, global_point, weekly_point, monthly_point, fav_novel_cnt, review_cnt, is_new, updated_recent
+            from snapshots
+            where snapshot_date=? and theme=?
+            """,
+            [snapshot_date, theme],
+        )
+        return self._rows_to_dicts(cur)
+
     def list_latest_themes(self) -> list[dict]:
-        return self.conn.execute(
+        cur = self.conn.execute(
             """
             with latest as (
               select max(snapshot_date) as ds from radar_scores
@@ -266,13 +291,14 @@ class DuckDBRepository:
             left join daily_theme_aggregates a on a.snapshot_date = r.snapshot_date and a.theme = r.theme
             order by r.theme
             """
-        ).fetchdf().to_dict("records")
+        )
+        return self._rows_to_dicts(cur)
 
     def get_theme_detail(self, theme: str, days: int = 30) -> dict:
         latest = self.conn.execute(
             "select * from radar_scores where theme=? order by snapshot_date desc limit 1", [theme]
         ).fetchone()
-        series = self.conn.execute(
+        cur = self.conn.execute(
             """
             select a.snapshot_date, a.works_count, a.avg_weekly, a.new_works, a.updated_works,
                    r.demand_heat, r.supply_pressure, r.entry_opportunity, r.sustainability
@@ -282,7 +308,8 @@ class DuckDBRepository:
             order by a.snapshot_date
             """,
             [theme, date.today() - timedelta(days=days)],
-        ).fetchdf().to_dict("records")
+        )
+        series = self._rows_to_dicts(cur)
         return {"latest": latest, "series": series}
 
     def get_aggregate_history(self, theme: str, metric: str, days: int = 60) -> list[tuple[date, float]]:

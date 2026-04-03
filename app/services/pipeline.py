@@ -38,7 +38,7 @@ class IngestionService:
                 texts: list[str] = []
                 for w in works:
                     decision = labeler.assign_theme(w.title, w.story, w.keyword)
-                    if decision.theme not in (None, topic.slug):
+                    if decision.theme != topic.slug:
                         continue
                     new_flag = _is_new_work(w.general_firstup, ds)
                     updated = _is_recently_updated(w.general_lastup, ds)
@@ -119,3 +119,34 @@ def _is_recently_updated(lastup: str | None, ds: date) -> int:
     except ValueError:
         return 0
     return int(d >= ds - timedelta(days=3))
+
+
+class MetricsRecomputeService:
+    """Recompute aggregates/radar/forecast from existing snapshots without API calls."""
+
+    def __init__(self, settings: AppSettings) -> None:
+        self.settings = settings
+
+    def recompute_metrics_from_snapshots(self, target_date: date | None = None) -> int:
+        ds = target_date or date.today()
+        repo = DuckDBRepository(self.settings.db_path)
+        repo.migrate()
+        updated = 0
+        try:
+            for theme in repo.list_snapshot_themes(ds):
+                entries = repo.get_snapshot_entries(ds, theme)
+                agg = _build_theme_aggregate(ds, theme, entries)
+                repo.upsert_theme_aggregate(agg)
+                score = compute_radar_axes(agg)
+                repo.upsert_radar_score(ds, theme, score, SCORING_VERSION)
+                for metric, model in (
+                    ("avg_weekly", SeasonalNaiveForecaster()),
+                    ("works_count", MovingAverageForecaster()),
+                ):
+                    history = repo.get_aggregate_history(theme, metric)
+                    forecast = model.predict(history, horizon=7)
+                    repo.store_forecast(theme, metric, forecast, model.name)
+                updated += 1
+        finally:
+            repo.close()
+        return updated
